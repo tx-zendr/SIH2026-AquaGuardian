@@ -158,50 +158,65 @@ function App() {
     window.speechSynthesis.speak(utterance);
   };
 
-  // Initialize Real Leaflet Map with Custom Overlays
+  // Initialize Real Leaflet Map with 100% Free OpenStreetMap & Clean Lifecycle
   useEffect(() => {
     if (currentPage !== 'gis' || !mapRef.current) return;
 
-    if (!leafletInstance.current) {
-      const map = L.map(mapRef.current, {
-        center: [12.0, 77.0],
-        zoom: 6,
-        zoomControl: false,
-        attributionControl: false
-      });
-
-      // CartoDB Positron High-Tech Light Ocean Tiles
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19,
-        subdomains: 'abcd',
-      }).addTo(map);
-
-      // Custom Zoom Control at Bottom Right
-      L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-      const layerGroup = L.layerGroup().addTo(map);
-      layersGroupRef.current = layerGroup;
-
-      // Handle Point on Map Click
-      map.on('click', (e: L.LeafletMouseEvent) => {
-        const { lat, lng } = e.latlng;
-        const latF = parseFloat(lat.toFixed(2));
-        const lonF = parseFloat(lng.toFixed(2));
-        const pName = `Sector (${latF}°N, ${lonF}°E)`;
-        setSelectedPoint({ lat: latF, lon: lonF, name: pName });
-        updateMapMarkerAndRoute(latF, lonF, map);
-        triggerAnalysis(latF, lonF, pName);
-      });
-
-      leafletInstance.current = map;
+    // Destroy existing instance to prevent "Map container is already initialized" error when re-entering
+    if (leafletInstance.current) {
+      leafletInstance.current.remove();
+      leafletInstance.current = null;
     }
+
+    const map = L.map(mapRef.current, {
+      center: [selectedPoint.lat || 12.0, selectedPoint.lon || 77.0],
+      zoom: 6,
+      zoomControl: false,
+      attributionControl: false
+    });
+
+    // 100% FREE OpenStreetMap Tiles — ZERO API Key or Tokens required worldwide
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      subdomains: ['a', 'b', 'c'],
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Custom Zoom Control at Bottom Right
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    const layerGroup = L.layerGroup().addTo(map);
+    layersGroupRef.current = layerGroup;
+
+    // Handle Point on Map Click
+    map.on('click', (e: L.LeafletMouseEvent) => {
+      const { lat, lng } = e.latlng;
+      const latF = parseFloat(lat.toFixed(2));
+      const lonF = parseFloat(lng.toFixed(2));
+      const pName = `Sector (${latF}°N, ${lonF}°E)`;
+      setSelectedPoint({ lat: latF, lon: lonF, name: pName });
+      updateMapMarkerAndRoute(latF, lonF, map);
+      triggerAnalysis(latF, lonF, pName);
+    });
+
+    leafletInstance.current = map;
+
+    // Force map to calculate exact container dimensions so it's instantly visible upon entering/re-entering
+    const resizeTimer = setTimeout(() => {
+      map.invalidateSize();
+    }, 150);
 
     renderMapLayers();
+    updateMapMarkerAndRoute(selectedPoint.lat, selectedPoint.lon, map);
 
-    // Trigger initial marker and route
-    if (leafletInstance.current) {
-      updateMapMarkerAndRoute(selectedPoint.lat, selectedPoint.lon, leafletInstance.current);
-    }
+    // Clean up on tab change / unmount
+    return () => {
+      clearTimeout(resizeTimer);
+      if (leafletInstance.current) {
+        leafletInstance.current.remove();
+        leafletInstance.current = null;
+      }
+    };
   }, [currentPage]);
 
   // Update Layers dynamically based on toggles
