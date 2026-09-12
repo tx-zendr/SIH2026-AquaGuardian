@@ -45,16 +45,33 @@ def master_supervisor_node(state: AquaAgentState) -> Dict[str, Any]:
     lat = state.get("lat", 9.93)
     lon = state.get("lon", 76.26)
     lang = state.get("lang", "en")
-    
     intent = "pfz_discovery_and_safety_clearance"
-    species = "Oil Sardine" if lat < 12.0 else "Yellowfin Tuna"
+    q_lower = query.lower()
+    if "tuna" in q_lower:
+        species = "Yellowfin Tuna & Skipjack"
+    elif "mackerel" in q_lower:
+        species = "Indian Mackerel"
+    elif "pomfret" in q_lower:
+        species = "Silver Pomfret"
+    elif "squid" in q_lower or "calamari" in q_lower:
+        species = "Indian Squid"
+    elif "prawn" in q_lower or "shrimp" in q_lower:
+        species = "Tiger Prawn"
+    elif lat > 16.0:
+        species = "Bombay Duck & Ribbonfish"
+    elif lat < 11.0:
+        species = "Yellowfin Tuna & Oceanic Bonito"
+    elif lon > 78.5:
+        species = "Blue Swimmer Crab & Mullet"
+    else:
+        species = "Oil Sardine"
 
     step = {
         "id": 1,
         "name": "Aqua Guardian Master Supervisor & DAG Planner",
         "time": "0.01 ms",
-        "detail": f"Parsed intent: '{intent}' at ({lat:.2f}°N, {lon:.2f}°E). Target language: '{lang}'. Formulated 6-stage execution graph.",
-        "subtask": "Decomposed query into parallel sub-agent evaluation pipelines."
+        "detail": f"Parsed intent: '{intent}' at ({lat:.2f}°N, {lon:.2f}°E). Target species: '{species}'. Language: '{lang}'.",
+        "subtask": f"Decomposed into parallel pipelines tailored for {species}."
     }
     
     return {

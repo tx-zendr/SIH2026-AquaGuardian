@@ -385,8 +385,8 @@ function App() {
       });
       const data = await res.json();
       
-      const waveVal = activeScenario === 'high_swell' ? '3.65m' : (0.95 + ((lat % 1.2) * 0.25)).toFixed(2) + 'm';
-      const windVal = activeScenario === 'high_swell' ? '28.4 kts' : (12.5 + ((lat % 2.0) * 1.8)).toFixed(1) + ' kts';
+      const waveVal = data.wave || (activeScenario === 'high_swell' ? '3.65m' : (0.95 + ((lat % 1.2) * 0.25)).toFixed(2) + 'm');
+      const windVal = data.wind || (activeScenario === 'high_swell' ? '28.4 kts' : (12.5 + ((lat % 2.0) * 1.8)).toFixed(1) + ' kts');
       const scoreVal = data.verdict === 'BLOCKED_BY_SAFETY_ENGINE' ? '28.4/100 (BLOCKED)' : '74.2/100';
 
       setMetrics({
@@ -404,7 +404,8 @@ function App() {
         species: data.species || 'Oil Sardine',
         imbl: data.imbl || '176.25 NM'
       }]);
-    } catch (err) {
+    } catch (err: any) {
+      console.error('Trigger analysis error:', err);
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'agent',
@@ -439,6 +440,17 @@ function App() {
         })
       });
       const data = await res.json();
+      
+      if (data.wave || data.wind || data.verdict) {
+        setMetrics(prev => ({
+          ...prev,
+          wave: data.wave || prev.wave,
+          wind: data.wind || prev.wind,
+          status: data.verdict || prev.status,
+          safety: data.verdict === 'BLOCKED_BY_SAFETY_ENGINE' ? '28.4/100 (BLOCKED)' : '74.2/100'
+        }));
+      }
+
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'agent',
@@ -447,11 +459,12 @@ function App() {
         species: data.species || 'Oil Sardine',
         imbl: data.imbl || '176.25 NM'
       }]);
-    } catch (err) {
+    } catch (err: any) {
+      console.error('Chat handleSend error:', err);
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'agent',
-        content: `Sea conditions evaluated. Status: SAFE_FOR_VENTURE.`,
+        content: `Connection error reaching marine intelligence backend (${err?.message || 'timeout'}). Please check backend server.`,
         verdict: 'SAFE_FOR_VENTURE',
         species: 'Oil Sardine',
         imbl: '176.25 NM'
@@ -466,7 +479,7 @@ function App() {
     setDagQuery(queryText);
     setDagLoading(true);
     try {
-      const res = await fetch('http://localhost:3000/api/orchestrate', {
+      const res = await fetch(getApiUrl(), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
