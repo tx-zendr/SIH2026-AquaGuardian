@@ -369,6 +369,14 @@ function App() {
     routeLineRef.current = route;
   };
 
+  // Dynamically resolve API URL for local dev vs Render cloud deployment
+  const getApiUrl = () => {
+    if (typeof window !== 'undefined' && window.location.port === '5173') {
+      return 'http://localhost:3000/api/orchestrate';
+    }
+    return '/api/orchestrate';
+  };
+
   // Run LangGraph analysis for selected point
   const triggerAnalysis = async (lat: number, lon: number, label: string) => {
     const query = `Analyze sea conditions, PFZ suitability, and IMBL border proximity at ${label}.`;
@@ -378,7 +386,7 @@ function App() {
     setIsTyping(true);
 
     try {
-      const res = await fetch('http://localhost:3000/api/orchestrate', {
+      const res = await fetch(getApiUrl(), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -433,7 +441,7 @@ function App() {
     setIsTyping(true);
 
     try {
-      const res = await fetch('http://localhost:3000/api/orchestrate', {
+      const res = await fetch(getApiUrl(), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

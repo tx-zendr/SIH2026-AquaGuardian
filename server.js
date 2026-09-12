@@ -105,7 +105,21 @@ Provide a structured, authentic maritime advisory covering sea safety, wave clea
   }
 });
 
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`Aqua Guardian Backend running on http://localhost:${PORT}`);
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Serve static frontend assets if built
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// Fallback all remaining routes to React index.html for SPA routing
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Aqua Guardian Service running on port ${PORT}`);
 });
