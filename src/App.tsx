@@ -72,22 +72,8 @@ function App() {
     status: 'SAFE_FOR_VENTURE'
   });
 
-  // Messages for GIS chat
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'user',
-      content: 'What are the sea conditions, PFZ suitability, and IMBL border proximity at coordinates 14.77N, 77.46E?'
-    },
-    {
-      id: '2',
-      role: 'agent',
-      content: 'Sea conditions at 14.77N, 77.46E are moderate with small waves and frequent whitecaps. The Safety Score for sea-venture clearance is 74.2/100, with wave heights of 1.03m and wind speeds of 14.9 kts.\n\nFor Potential Fishing Zones (PFZ), the area is suitable for Oil Sardine fishing, with a catch boost of 4.5x at a depth of 45m. The Alleppey Thermal Front is approximately 69.9 km away, bearing 252° (WSW).\n\nThe India-Sri Lanka International Maritime Boundary Line (IMBL) is 176.25 NM away, and you are currently in safe sovereign waters.',
-      verdict: 'SAFE_FOR_VENTURE',
-      species: 'Oil Sardine',
-      imbl: '176.25 NM'
-    }
-  ]);
+  // Messages for GIS chat & AI Chatbot (starts empty so user sees real live output on demand)
+  const [messages, setMessages] = useState<Message[]>([]);
 
   // DAG State
   const [dagQuery, setDagQuery] = useState('Nearest Tuna PFZ (Kochi)');
@@ -743,7 +729,18 @@ function App() {
 
               {/* Message List */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/30">
-                {messages.map((msg) => (
+                {messages.length === 0 ? (
+                  <div className="h-full min-h-[220px] flex flex-col items-center justify-center text-center p-6 text-gray-500">
+                    <div className="w-12 h-12 rounded-2xl bg-cyan-50 border border-cyan-100 flex items-center justify-center text-cyan-600 mb-3 shadow-2xs">
+                      <Sparkles size={22} className="animate-pulse" />
+                    </div>
+                    <div className="font-bold text-gray-800 text-sm">Ready for Marine Queries</div>
+                    <p className="text-xs text-gray-500 mt-1 max-w-[240px] leading-relaxed">
+                      Click any point on the GIS Map or select a prompt chip above to generate real-time AI advisory.
+                    </p>
+                  </div>
+                ) : (
+                  messages.map((msg) => (
                   <div key={msg.id} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                     <div className={`max-w-[90%] rounded-2xl p-4 text-[13px] leading-relaxed ${
                       msg.role === 'user' 
@@ -898,7 +895,7 @@ function App() {
                       )}
                     </div>
                   </div>
-                ))}
+                )))}
                 {isTyping && (
                   <div className="flex flex-col items-start space-y-2">
                     <div className="bg-white border border-cyan-200 shadow-sm rounded-2xl rounded-bl-sm p-4 w-full max-w-[90%] space-y-2.5">
@@ -1228,20 +1225,47 @@ function App() {
             </div>
 
             <div className="flex-1 overflow-y-auto py-6 space-y-4">
-              {messages.map((m) => (
-                <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[80%] rounded-2xl p-4 text-xs md:text-sm leading-relaxed ${
-                    m.role === 'user' 
-                      ? 'bg-cyan-700 text-white rounded-br-none shadow-md' 
-                      : 'bg-white text-gray-800 border border-gray-200 rounded-bl-none shadow-sm'
-                  }`}>
-                    <div className="text-[10px] font-mono uppercase mb-1 opacity-70">
-                      {m.role === 'user' ? 'Fisherman / Vessel' : 'Aqua Guardian System'}
-                    </div>
-                    <div className="whitespace-pre-wrap">{m.content}</div>
+              {messages.length === 0 ? (
+                <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center p-8 text-gray-500">
+                  <div className="w-14 h-14 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600 mb-3 shadow-xs">
+                    <Sparkles size={26} className="animate-pulse" />
+                  </div>
+                  <div className="font-bold text-gray-900 text-base">Aqua Guardian Intelligence Console</div>
+                  <p className="text-xs text-gray-500 mt-1.5 max-w-md leading-relaxed">
+                    Autonomous Ocean reasoning powered by LangGraph Swarm & Gemini 3.6 Flash. Ask about real-time sea safety, wave margins, PFZ hotspots, or border geofencing.
+                  </p>
+                  <div className="flex flex-wrap gap-2 justify-center mt-5 max-w-md">
+                    {[
+                      'Where is the safest tuna PFZ right now?',
+                      'Check wave height & swell risk for artisanal boat',
+                      'Verify distance to India-Sri Lanka IMBL border'
+                    ].map((promptText) => (
+                      <button
+                        key={promptText}
+                        onClick={() => handleSend(promptText)}
+                        className="text-xs bg-white border border-gray-200 hover:border-cyan-500 hover:text-cyan-700 px-3 py-1.5 rounded-xl shadow-2xs cursor-pointer transition-all"
+                      >
+                        {promptText}
+                      </button>
+                    ))}
                   </div>
                 </div>
-              ))}
+              ) : (
+                messages.map((m) => (
+                  <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[80%] rounded-2xl p-4 text-xs md:text-sm leading-relaxed ${
+                      m.role === 'user' 
+                        ? 'bg-cyan-700 text-white rounded-br-none shadow-md' 
+                        : 'bg-white text-gray-800 border border-gray-200 rounded-bl-none shadow-sm'
+                    }`}>
+                      <div className="text-[10px] font-mono uppercase mb-1 opacity-70">
+                        {m.role === 'user' ? 'Fisherman / Vessel' : 'Aqua Guardian System'}
+                      </div>
+                      <div className="whitespace-pre-wrap">{m.content}</div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
             <div className="pt-4 border-t border-gray-200">
