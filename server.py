@@ -200,6 +200,65 @@ def get_provenance():
     return get_provenance_audit_trail()
 
 
+class LoginRequest(BaseModel):
+    email: Optional[str] = "demo@isro-orca.gov.in"
+    role: Optional[str] = "fisherman"
+    name: Optional[str] = None
+    organization: Optional[str] = None
+
+
+class ThresholdsRequest(BaseModel):
+    max_wave_height: Optional[float] = 3.5
+    imbl_buffer_nm: Optional[float] = 5.0
+    auto_navic_broadcast: Optional[bool] = True
+
+
+@app.post("/api/auth/login")
+def post_login(req: LoginRequest):
+    import time
+    name = req.name or (req.email.split("@")[0] if req.email else "Naval Officer")
+    user = {
+        "id": f"usr_{int(time.time())}",
+        "name": name,
+        "email": req.email,
+        "role": req.role,
+        "designation": "Chief Ocean Scientist" if req.role == "admin" else ("Operations Officer" if req.role == "officer" else "Vessel Master"),
+        "organization": req.organization or ("ISRO SAC" if req.role == "admin" else ("Indian Coast Guard" if req.role == "officer" else "Fisheries Cooperative")),
+        "harbour": "Kochi Marine Port" if req.role == "fisherman" else "National Command",
+        "avatar": "⚓" if req.role == "fisherman" else ("🛰️" if req.role == "admin" else "🛡️")
+    }
+    return {"status": "SUCCESS", "user": user, "token": f"orca_jwt_{int(time.time())}"}
+
+
+@app.get("/api/admin/fleet")
+def get_fleet():
+    import datetime
+    return {
+        "status": "SUCCESS",
+        "timestamp": datetime.datetime.utcnow().isoformat(),
+        "active_vessels_count": 8,
+        "fleet": [
+            {"id": "IND-KL-07-MM-4421", "name": "Matsya Sagar IV", "type": "Artisanal Motorboat", "captain": "Capt. Ramesh Nair", "lat": 9.85, "lon": 75.82, "wave": "1.10m", "waveLimit": "2.20m", "imblClearance": "174 NM", "status": "CLEARED"},
+            {"id": "IND-KA-02-TR-8109", "name": "Ocean Pioneer III", "type": "Mechanized Gillnetter", "captain": "Master S. Bhat", "lat": 12.72, "lon": 74.45, "wave": "1.35m", "waveLimit": "3.20m", "imblClearance": "168 NM", "status": "CLEARED"},
+            {"id": "IND-TN-11-TR-9043", "name": "Danush Deepsea V", "type": "Deep-Sea Trawler", "captain": "Capt. K. Murugan", "lat": 9.18, "lon": 79.22, "wave": "1.25m", "waveLimit": "4.50m", "imblClearance": "3.8 NM", "status": "BUFFER_WARNING"}
+        ]
+    }
+
+
+@app.post("/api/admin/thresholds")
+def post_thresholds(req: ThresholdsRequest):
+    import datetime
+    return {
+        "status": "SUCCESS",
+        "updated_at": datetime.datetime.utcnow().isoformat(),
+        "thresholds": {
+            "max_wave_height": req.max_wave_height,
+            "imbl_buffer_nm": req.imbl_buffer_nm,
+            "auto_navic_broadcast": req.auto_navic_broadcast
+        }
+    }
+
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 3000))

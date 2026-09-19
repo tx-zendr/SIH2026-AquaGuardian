@@ -1,4 +1,18 @@
-export type Page = 'gis' | 'decision_matrix' | 'explainable_ai' | 'agent_dag' | 'vessel_intel' | 'scenario_studio' | 'trust_provenance' | 'chatbot';
+export type Page = 'home' | 'admin' | 'gis' | 'decision_matrix' | 'explainable_ai' | 'agent_dag' | 'vessel_intel' | 'scenario_studio' | 'trust_provenance' | 'chatbot';
+
+export type UserRole = 'fisherman' | 'admin' | 'officer' | 'guest';
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  designation: string;
+  organization: string;
+  harbour?: string;
+  vesselId?: string;
+  avatar?: string;
+}
 
 export type LanguageCode = 'en' | 'hi' | 'ml' | 'ta';
 

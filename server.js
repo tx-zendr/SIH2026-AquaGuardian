@@ -397,6 +397,46 @@ app.post('/api/what-if', (req, res) => {
 });
 
 // -------------------------------------------------------------
+// 7. ROLE-BASED AUTH & FLEET MONITORING ENDPOINTS
+// -------------------------------------------------------------
+app.post('/api/auth/login', (req, res) => {
+  const { email, role = 'fisherman', name } = req.body;
+  const user = {
+    id: 'usr_' + Date.now().toString(36),
+    name: name || (email ? email.split('@')[0] : 'Naval Officer'),
+    email: email || 'demo@isro-orca.gov.in',
+    role: role,
+    designation: role === 'admin' ? 'Chief Ocean Scientist' : role === 'officer' ? 'Operations Officer' : 'Vessel Master',
+    organization: role === 'admin' ? 'ISRO SAC' : role === 'officer' ? 'Indian Coast Guard' : 'Fisheries Cooperative',
+    harbour: role === 'fisherman' ? 'Kochi Marine Port' : 'National Command',
+    avatar: role === 'fisherman' ? '⚓' : role === 'admin' ? '🛰️' : '🛡️'
+  };
+  res.json({ status: 'SUCCESS', user, token: 'orca_jwt_' + Date.now() });
+});
+
+app.get('/api/admin/fleet', (req, res) => {
+  res.json({
+    status: 'SUCCESS',
+    timestamp: new Date().toISOString(),
+    active_vessels_count: 8,
+    fleet: [
+      { id: 'IND-KL-07-MM-4421', name: 'Matsya Sagar IV', type: 'Artisanal Motorboat', captain: 'Capt. Ramesh Nair', lat: 9.85, lon: 75.82, wave: '1.10m', waveLimit: '2.20m', imblClearance: '174 NM', status: 'CLEARED' },
+      { id: 'IND-KA-02-TR-8109', name: 'Ocean Pioneer III', type: 'Mechanized Gillnetter', captain: 'Master S. Bhat', lat: 12.72, lon: 74.45, wave: '1.35m', waveLimit: '3.20m', imblClearance: '168 NM', status: 'CLEARED' },
+      { id: 'IND-TN-11-TR-9043', name: 'Danush Deepsea V', type: 'Deep-Sea Trawler', captain: 'Capt. K. Murugan', lat: 9.18, lon: 79.22, wave: '1.25m', waveLimit: '4.50m', imblClearance: '3.8 NM', status: 'BUFFER_WARNING' }
+    ]
+  });
+});
+
+app.post('/api/admin/thresholds', (req, res) => {
+  const { max_wave_height = 3.5, imbl_buffer_nm = 5.0, auto_navic_broadcast = true } = req.body;
+  res.json({
+    status: 'SUCCESS',
+    updated_at: new Date().toISOString(),
+    thresholds: { max_wave_height, imbl_buffer_nm, auto_navic_broadcast }
+  });
+});
+
+// -------------------------------------------------------------
 // STATIC SPA HOSTING FOR RENDER CLOUD
 // -------------------------------------------------------------
 app.use(express.static(path.join(__dirname, 'dist')));

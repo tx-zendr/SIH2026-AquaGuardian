@@ -328,3 +328,79 @@ export const INITIAL_DAG_STEPS: AgentStepTrace[] = [
 
 export const CANDIDATE_ZONES = INITIAL_CANDIDATE_ZONES;
 export const VESSEL_PROFILES = DEFAULT_VESSEL_PROFILES;
+
+export const DEMO_USERS = [
+  {
+    id: 'user_ramesh',
+    name: 'Capt. Ramesh Nair',
+    email: 'ramesh.nair@kochi-fisheries.in',
+    role: 'fisherman' as const,
+    designation: 'Vessel Master (OBM Craft)',
+    organization: 'Kochi Marine Fishers Cooperative',
+    harbour: 'Kochi Fishing Harbour',
+    vesselId: 'artisanal_motorboat',
+    avatar: '👨‍✈️'
+  },
+  {
+    id: 'user_ananya',
+    name: 'Dr. Ananya Sharma',
+    email: 'a.sharma@isro.sac.gov.in',
+    role: 'admin' as const,
+    designation: 'Lead Oceanographer & Duty Scientist',
+    organization: 'ISRO Space Applications Centre (SAC)',
+    harbour: 'All Indian Ports',
+    avatar: '🛰️'
+  },
+  {
+    id: 'user_rao',
+    name: 'Commander V. Rao',
+    email: 'ops.mrcc@indiancoastguard.nic.in',
+    role: 'officer' as const,
+    designation: 'Maritime Operations Officer',
+    organization: 'Indian Coast Guard MRCC (1554)',
+    harbour: 'Western & Southern Command',
+    avatar: '🛡️'
+  }
+];
+
+export const FLEET_VESSELS = [
+  {
+    id: 'IND-KL-07-MM-4421',
+    name: 'Matsya Sagar IV',
+    type: 'Artisanal Motorboat (OBM)',
+    captain: 'Capt. Ramesh Nair',
+    lat: 9.85,
+    lon: 75.82,
+    wave: '1.10m',
+    waveLimit: '2.20m',
+    imblClearance: '174 NM',
+    status: 'CLEARED' as const,
+    lastPing: '2 mins ago'
+  },
+  {
+    id: 'IND-KA-02-TR-8109',
+    name: 'Ocean Pioneer III',
+    type: 'Mechanized Gillnetter',
+    captain: 'Master S. Bhat',
+    lat: 12.72,
+    lon: 74.45,
+    wave: '1.35m',
+    waveLimit: '3.20m',
+    imblClearance: '168 NM',
+    status: 'CLEARED' as const,
+    lastPing: 'Just now'
+  },
+  {
+    id: 'IND-TN-11-TR-9043',
+    name: 'Danush Deepsea V',
+    type: 'Deep-Sea Trawler',
+    captain: 'Capt. K. Murugan',
+    lat: 9.18,
+    lon: 79.22,
+    wave: '1.25m',
+    waveLimit: '4.50m',
+    imblClearance: '3.8 NM',
+    status: 'BUFFER_WARNING' as const,
+    lastPing: '1 min ago'
+  }
+];

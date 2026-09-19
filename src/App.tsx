@@ -5,7 +5,8 @@ import {
   Message, 
   Page, 
   ScenarioMode, 
-  VesselProfile 
+  VesselProfile,
+  User 
 } from './types/orca';
 import { 
   CANDIDATE_ZONES, 
@@ -17,6 +18,9 @@ import {
 } from './services/orchestrationService';
 
 import HeaderNav from './components/HeaderNav';
+import HomePage from './components/HomePage';
+import { AdminDashboard } from './components/AdminDashboard';
+import { AuthModal } from './components/AuthModal';
 import GisCommandCenter from './components/GisCommandCenter';
 import DecisionMatrix from './components/DecisionMatrix';
 import ExplainableAiShap from './components/ExplainableAiShap';
@@ -27,7 +31,10 @@ import TrustProvenance from './components/TrustProvenance';
 import ConversationalConsole from './components/ConversationalConsole';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<Page>('gis');
+  const [currentPage, setCurrentPage] = useState<Page>('home');
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
   const [activeLang, setActiveLang] = useState<LanguageCode>('en');
   const [activeScenario, setActiveScenario] = useState<ScenarioMode>('normal');
   const [selectedVessel, setSelectedVessel] = useState<VesselProfile>(VESSEL_PROFILES[0]);
@@ -93,7 +100,7 @@ export default function App() {
     playVernacularTTS(text, activeLang, () => setSpeaking(false));
   };
 
-  // Send query to Orchestrator (Backend API or Gemini 3.6 Flash fallback)
+  // Send query to Orchestrator (Backend API or Gemini fallback)
   const handleSendMessage = async (text: string) => {
     if (!text.trim()) return;
 
@@ -165,10 +172,23 @@ export default function App() {
     alert('🚨 EMERGENCY DISTRESS TRANSMISSION INITIATED\n\nVHF Channel 16 Broadcast Triggered.\nINCOIS Maritime Rescue Coordination Centre (MRCC - 1554) Notified.\nGPS Distress Coordinates: ' + selectedPoint.lat + '°N, ' + selectedPoint.lon + '°E');
   };
 
+  // Handle Login
+  const handleLogin = (user: User, targetPage?: Page) => {
+    setCurrentUser(user);
+    if (targetPage) {
+      setCurrentPage(targetPage);
+    }
+  };
+
+  // Handle Logout
+  const handleLogout = () => {
+    setCurrentUser(null);
+  };
+
   return (
     <div className="flex flex-col h-screen w-full font-sans text-gray-800 bg-[#f4f6f9] overflow-hidden select-none">
       
-      {/* Top Header Bar (Plane 1 Experience) */}
+      {/* Top Header Bar */}
       <HeaderNav
         currentPage={currentPage}
         onPageChange={setCurrentPage}
@@ -180,11 +200,31 @@ export default function App() {
         onVesselChange={setSelectedVessel}
         onSosTrigger={handleSos}
         edgeOffline={edgeOffline}
+        currentUser={currentUser}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
       />
 
       {/* Main Plane Workspace */}
       <main className="flex-1 relative overflow-hidden">
-        {/* 1. GIS Command Center */}
+        {/* 0. Home / Landing Page */}
+        {currentPage === 'home' && (
+          <HomePage
+            onNavigate={setCurrentPage}
+            currentUser={currentUser}
+            onOpenAuth={() => setIsAuthModalOpen(true)}
+          />
+        )}
+
+        {/* 1. Admin Control & Fleet Command Center */}
+        {currentPage === 'admin' && (
+          <AdminDashboard
+            currentUser={currentUser}
+            onNavigate={setCurrentPage}
+            onOpenAuth={() => setIsAuthModalOpen(true)}
+          />
+        )}
+
+        {/* 2. GIS Command Center */}
         {currentPage === 'gis' && (
           <GisCommandCenter
             selectedPoint={selectedPoint}
@@ -200,7 +240,7 @@ export default function App() {
           />
         )}
 
-        {/* 2. Multi-Objective Decision Matrix */}
+        {/* 3. Multi-Objective Decision Matrix */}
         {currentPage === 'decision_matrix' && (
           <DecisionMatrix
             selectedVessel={selectedVessel}
@@ -209,7 +249,7 @@ export default function App() {
           />
         )}
 
-        {/* 3. Explainable AI & Conformal Uncertainty */}
+        {/* 4. Explainable AI & Conformal Uncertainty */}
         {currentPage === 'explainable_ai' && (
           <ExplainableAiShap
             selectedZone={selectedZone}
@@ -217,7 +257,7 @@ export default function App() {
           />
         )}
 
-        {/* 4. LangGraph Multi-Agent Swarm DAG */}
+        {/* 5. LangGraph Multi-Agent Swarm DAG */}
         {currentPage === 'agent_dag' && (
           <AgentDagExplorer
             selectedPoint={selectedPoint}
@@ -235,7 +275,7 @@ export default function App() {
           />
         )}
 
-        {/* 5. Vessel Reachability & Hydrodynamics Studio */}
+        {/* 6. Vessel Reachability & Hydrodynamics Studio */}
         {currentPage === 'vessel_intel' && (
           <VesselIntelligence
             selectedVessel={selectedVessel}
@@ -243,7 +283,7 @@ export default function App() {
           />
         )}
 
-        {/* 6. What-If Scenario Sandbox */}
+        {/* 7. What-If Scenario Sandbox */}
         {currentPage === 'scenario_studio' && (
           <ScenarioStudio
             selectedVessel={selectedVessel}
@@ -253,7 +293,7 @@ export default function App() {
           />
         )}
 
-        {/* 7. Trust, Provenance & HITL Escalation */}
+        {/* 8. Trust, Provenance & HITL Escalation */}
         {currentPage === 'trust_provenance' && (
           <TrustProvenance
             selectedPoint={selectedPoint}
@@ -261,7 +301,7 @@ export default function App() {
           />
         )}
 
-        {/* 8. Conversational Console */}
+        {/* 9. Conversational Console */}
         {currentPage === 'chatbot' && (
           <ConversationalConsole
             messages={messages}
@@ -276,19 +316,30 @@ export default function App() {
       </main>
 
       {/* Offline Edge Toggle in bottom right for demonstration */}
-      <div className="absolute bottom-2 right-4 z-40">
-        <button
-          onClick={() => setEdgeOffline(prev => !prev)}
-          className={`text-[10px] font-mono px-2 py-0.5 rounded-full border transition-all cursor-pointer ${
-            edgeOffline 
-              ? 'bg-amber-600 text-white border-amber-500 shadow-md animate-pulse' 
-              : 'bg-gray-800/80 hover:bg-gray-900 text-gray-300 border-gray-700'
-          }`}
-          title="Toggle Edge Offline Mode to test SQLite-WASM local cached rules"
-        >
-          {edgeOffline ? '⚡ Test Mode: OFFLINE CACHE (Active)' : '🌐 Test Mode: Edge Online'}
-        </button>
-      </div>
+      {currentPage !== 'home' && (
+        <div className="absolute bottom-2 right-4 z-40">
+          <button
+            onClick={() => setEdgeOffline(prev => !prev)}
+            className={`text-[10px] font-mono px-2 py-0.5 rounded-full border transition-all cursor-pointer ${
+              edgeOffline 
+                ? 'bg-amber-600 text-white border-amber-500 shadow-md animate-pulse' 
+                : 'bg-gray-800/80 hover:bg-gray-900 text-gray-300 border-gray-700'
+            }`}
+            title="Toggle Edge Offline Mode to test SQLite-WASM local cached rules"
+          >
+            {edgeOffline ? '⚡ Test Mode: OFFLINE CACHE (Active)' : '🌐 Test Mode: Edge Online'}
+          </button>
+        </div>
+      )}
+
+      {/* Authentication & Profile Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onLogin={handleLogin}
+        currentUser={currentUser}
+        onLogout={handleLogout}
+      />
 
     </div>
   );
